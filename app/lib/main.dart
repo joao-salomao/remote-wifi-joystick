@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:control_pad/control_pad.dart';
 import 'package:control_pad/models/pad_button_item.dart';
+import 'package:control_pad/models/gestures.dart';
+import 'dart:io';
 
 void main() {
   runApp(App());
@@ -40,27 +42,43 @@ class HomePage extends StatelessWidget {
                 PadButtonItem(index: 3, buttonIcon: Icon(Icons.arrow_drop_up)),
               ],
             ),
-            PadButtonsView(buttons: const [
-              PadButtonItem(index: 0, buttonText: "B"),
-              PadButtonItem(
-                index: 1,
-                buttonText: "A",
-                pressedColor: Colors.red,
-              ),
-              PadButtonItem(
-                index: 2,
-                buttonText: "X",
-                pressedColor: Colors.green,
-              ),
-              PadButtonItem(
-                index: 3,
-                buttonText: "Y",
-                pressedColor: Colors.yellow,
-              ),
-            ])
+            PadButtonsView(
+                padButtonPressedCallback: onPressPadButton,
+                buttons: const [
+                  PadButtonItem(index: 0, buttonText: "B"),
+                  PadButtonItem(
+                    index: 1,
+                    buttonText: "A",
+                    pressedColor: Colors.red,
+                  ),
+                  PadButtonItem(
+                    index: 2,
+                    buttonText: "X",
+                    pressedColor: Colors.green,
+                  ),
+                  PadButtonItem(
+                    index: 3,
+                    buttonText: "Y",
+                    pressedColor: Colors.yellow,
+                  ),
+                ])
           ],
         ),
       ),
     );
+  }
+
+  onPressPadButton(int buttonIndex, Gestures gesture) async {
+    print("$buttonIndex | $gesture");
+
+    final socket = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
+
+    socket.send(
+      '{"key":"a"}'.codeUnits,
+      new InternetAddress("10.0.2.2"),
+      1080,
+    );
+
+    print("aquiii");
   }
 }
