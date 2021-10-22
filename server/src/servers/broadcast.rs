@@ -14,10 +14,11 @@ struct BroadcastMessage {
 }
 
 pub struct BroadcastServer {
-    service_socket_addr: SocketAddr,
     broadcast_socket_addr: SocketAddr,
     read_timeout: Duration,
     message_interval: Duration,
+    key_press_server_ip: IpAddr,
+    key_press_server_port: u16,
 }
 
 impl BroadcastServer {
@@ -26,12 +27,14 @@ impl BroadcastServer {
         port: u16,
         message_interval: Duration,
         read_timeout: Duration,
-        service_socket_addr: SocketAddr,
+        key_press_server_ip: IpAddr,
+        key_press_server_port: u16,
     ) -> Self {
         Self {
             read_timeout,
             message_interval,
-            service_socket_addr,
+            key_press_server_ip,
+            key_press_server_port,
             broadcast_socket_addr: SocketAddr::new(ip, port),
         }
     }
@@ -48,8 +51,8 @@ impl BroadcastServer {
             .expect("couldn't set broadcast to true");
 
         let message = BroadcastMessage {
-            ip: self.service_socket_addr.ip().to_string(),
-            port: self.service_socket_addr.port(),
+            ip: self.key_press_server_ip.to_string(),
+            port: self.key_press_server_port,
         };
 
         let data = json!(message).to_string();

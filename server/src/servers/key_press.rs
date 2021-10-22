@@ -42,8 +42,9 @@ impl KeyPressServer {
                     continue;
                 }
             };
+
             dbg!(&message);
-            // enigo.key_click(Key::Layout(message.key));
+            enigo.key_click(Key::Layout(message.key));
         }
     }
 }

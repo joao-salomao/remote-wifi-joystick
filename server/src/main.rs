@@ -3,7 +3,7 @@ mod servers;
 use crate::servers::BroadcastServer;
 use crate::servers::KeyPressServer;
 
-use std::net::{IpAddr, Ipv4Addr, SocketAddr};
+use std::net::{IpAddr, Ipv4Addr};
 use std::thread;
 use std::time::Duration;
 
@@ -18,26 +18,29 @@ const BROADCAST_SERVER_MESSAGE_INTERVAL: Duration = Duration::from_secs(2);
 const BROADCAST_SERVER_READ_TIMEOUT: Duration = Duration::from_secs(5);
 
 fn main() {
-    let service_socket_addr = SocketAddr::new(KEY_PRESS_SERVER_IP, KEY_PRESS_SERVER_PORT);
+    let key_press_server = KeyPressServer::new(KEY_PRESS_SERVER_IP, KEY_PRESS_SERVER_PORT);
+    let broadcast_server = BroadcastServer::new(
+        BROADCAST_SERVER_IP,
+        BROADCAST_SERVER_PORT,
+        BROADCAST_SERVER_MESSAGE_INTERVAL,
+        BROADCAST_SERVER_READ_TIMEOUT,
+        KEY_PRESS_SERVER_IP,
+        KEY_PRESS_SERVER_PORT,
+    );
 
-    let mut handles = Vec::with_capacity(2);
-
-    handles.push(thread::spawn(move || {
-        BroadcastServer::new(
-            BROADCAST_SERVER_IP,
-            BROADCAST_SERVER_PORT,
-            BROADCAST_SERVER_MESSAGE_INTERVAL,
-            BROADCAST_SERVER_READ_TIMEOUT,
-            service_socket_addr,
-        )
-        .run();
-    }));
-
-    thread::spawn(move || {
-        KeyPressServer::new(KEY_PRESS_SERVER_IP, KEY_PRESS_SERVER_PORT).run();
+    let broadcast_handler = thread::spawn(move || {
+        broadcast_server.run();
     });
 
-    for handle in handles {
-        handle.join().expect("couldn't join thread");
-    }
+    let key_press_handler = thread::spawn(move || {
+        key_press_server.run();
+    });
+
+    broadcast_handler
+        .join()
+        .expect("The broadcast thread has panicked");
+
+    key_press_handler
+        .join()
+        .expect("The key press thread has panicked");
 }
