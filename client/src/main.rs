@@ -34,7 +34,7 @@ fn run_key_press_sender(server_socket_addr: SocketAddr) {
         match socket.send_to(bytes, server_socket_addr) {
             Ok(_) => {
                 acc += 1;
-                // thread::sleep(Duration::from_secs(1));
+                thread::sleep(Duration::from_secs(1));
             }
             Err(e) => println!("Erro: {}", e),
         }

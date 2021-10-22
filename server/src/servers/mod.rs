@@ -1,4 +1,5 @@
-pub use broadcast_server::BroadcastServer;
+mod broadcast;
+mod key_press;
 
-mod broadcast_server;
-mod key_press_server;
+pub use broadcast::BroadcastServer;
+pub use key_press::KeyPressServer;
