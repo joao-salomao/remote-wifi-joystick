@@ -1,3 +1,4 @@
+use rand::prelude::*;
 use rand::{thread_rng, Rng};
 use serde::{Deserialize, Serialize};
 use serde_json;
@@ -8,7 +9,7 @@ use std::thread;
 use std::time::Duration;
 
 #[derive(Serialize, Deserialize, Debug)]
-struct Point {
+struct KeyPressMessage {
     key: char,
 }
 
@@ -24,16 +25,16 @@ fn run_key_press_sender(server_socket_addr: SocketAddr) {
     let mut acc = 0;
 
     loop {
-        let number = rng.gen::<char>();
-
-        let point = Point { key: number };
-        let serialized = serde_json::to_string(&point).unwrap();
+        let options = "qwertyuiopasdfghjklçzxcvbnm".chars();
+        let key = options.choose(&mut rng).expect("couldn't get a random key");
+        let message = KeyPressMessage { key };
+        let serialized = serde_json::to_string(&message).unwrap();
         let bytes = serialized.as_bytes();
 
         match socket.send_to(bytes, server_socket_addr) {
             Ok(_) => {
                 acc += 1;
-                thread::sleep(Duration::from_secs(1));
+                // thread::sleep(Duration::from_secs(1));
             }
             Err(e) => println!("Erro: {}", e),
         }
@@ -52,19 +53,25 @@ fn find_server() -> SocketAddr {
     let socket = UdpSocket::bind("0.0.0.0:9001").unwrap();
 
     loop {
-        let mut buffer = [0; 32];
-        let (number_of_bytes, source_address) = socket.recv_from(&mut buffer).unwrap();
+        let mut buffer = [0; 50];
 
-        println!("Recebido {} bytes de {}", number_of_bytes, source_address);
+        let filled_buffer = match socket.recv_from(&mut buffer) {
+            Ok((number_of_bytes, source_address)) => {
+                println!("Recebido {} bytes de {}", number_of_bytes, source_address);
+                &mut buffer[..number_of_bytes]
+            }
+            Err(e) => {
+                println!("Algo deu errado: {}", e);
+                continue;
+            }
+        };
 
-        let message = from_utf8(&buffer).unwrap();
+        dbg!(from_utf8(&filled_buffer).unwrap());
 
-        dbg!(message);
-
-        let server_info: ServerInfo = match serde_json::from_slice(&buffer) {
+        let server_info: ServerInfo = match serde_json::from_slice(&filled_buffer) {
             Ok(v) => v,
             Err(e) => {
-                println!("Erro no parse da resposta: {}", e);
+                println!("{}", e);
                 continue;
             }
         };
